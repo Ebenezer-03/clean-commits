@@ -7,16 +7,22 @@ Stop AI coding agents from polluting your commit history. `clean-commits` keeps 
 
 It ships two ways from one set of rules: a native **Claude Code plugin**, and a plain **`AGENTS.md`** file for every other agent (Codex, Cursor, Aider, Copilot Workspace, etc.) that reads that convention.
 
-## The problem
+## Quick demo
 
-Point an AI agent at a repo and let it commit, and you tend to get:
+What a single "implement the plan" instruction produces, when the plan spans a login feature, a refactor, and its tests:
 
-- `Co-Authored-By: Claude <noreply@anthropic.com>` trailers baked into history you didn't ask for
-- Commit messages that describe the agent's plan ("phase 1", "phase 2") instead of the actual diff
-- Ten unrelated changes squashed into one commit, or one change split across ten
-- Work sitting uncommitted and unpushed for an entire session, gone if the session dies
+```
+feat: add email/password login form
+refactor: extract validation into shared hook
+test: cover login form validation edge cases
+```
 
-`clean-commits` is a small, boring set of rules that fixes all four.
+Not this:
+
+```
+feat: phase 1
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
 
 ## What it enforces
 
@@ -44,27 +50,27 @@ Copy [`AGENTS.md`](./AGENTS.md) into the root of your project, or merge its cont
 
 **Every commit after that.** The agent reuses the stored identity, writes a Conventional Commits message describing the diff it just made, checks the message for any AI attribution before running `git commit`, then runs `git push`.
 
-Example of what a single "implement the plan" instruction produces, when the plan spans a login feature, a refactor, and its tests:
+## Do you need this?
 
-```
-feat: add email/password login form
-refactor: extract validation into shared hook
-test: cover login form validation edge cases
-```
+If you already run [commitlint](https://github.com/conventional-changelog/commitlint) plus a [husky](https://github.com/typicode/husky) or [pre-commit](https://github.com/pre-commit/pre-commit) hook that strips co-author trailers, you already have most of this, and you should keep that setup.
 
-Not this:
+`clean-commits` exists for the case those tools don't cover: a hook runs on `git commit`, but an agent that writes the message *and* runs the commit in the same step can produce a bad message before any hook has a chance to reject it, and there's no human sitting at the prompt to notice. This is instructions the agent follows while writing the commit, not a hook that runs after.
 
-```
-feat: phase 1
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
+## Related projects
+
+- [commitlint](https://github.com/conventional-changelog/commitlint): lints commit messages against Conventional Commits. Doesn't touch authorship or AI-attribution trailers.
+- [husky](https://github.com/typicode/husky) / [pre-commit](https://github.com/pre-commit/pre-commit): generic git hook runners. You could build this exact behavior on top of either, but you'd have to write it yourself.
+- [commitizen](https://github.com/commitizen/cz-cli): interactive commit message prompts for humans. `clean-commits` targets agents committing without a human in the loop, so there's no prompt to answer.
 
 ## Cleaning up existing history
+
+> [!WARNING]
+> Rewriting already-pushed history requires a force-push and affects anyone else with the repo cloned. Only do this after explicit confirmation from whoever owns the repo.
 
 If a repo already has AI-attributed commits:
 
 - **Unpushed, most recent commit:** `git commit --amend` with a corrected message.
-- **Older or already-pushed commits:** requires rewriting history (`git rebase -i`, or `git filter-repo` for bulk cleanup). This is destructive to shared history and needs a force-push, so the agent explains the tradeoff and asks for explicit confirmation first.
+- **Older or already-pushed commits:** requires rewriting history (`git rebase -i`, or `git filter-repo` for bulk cleanup).
 
 ## Contributing
 
