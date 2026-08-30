@@ -1,36 +1,75 @@
 # clean-commits
 
-Every commit authored solely by *you* — never an AI co-author — with production-grade [Conventional Commits](https://www.conventionalcommits.org/) messages. Works as a native Claude Code skill, or as a plain `AGENTS.md` for any other coding agent (Codex, Cursor, Aider, ...).
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Format](https://img.shields.io/badge/format-Claude%20Code%20plugin%20%2B%20AGENTS.md-informational)](#installation)
 
-## What it does
+Stop AI coding agents from polluting your commit history. `clean-commits` keeps every commit authored solely by you and every message in [Conventional Commits](https://www.conventionalcommits.org/) format — no `Co-Authored-By: Claude` trailers, no "🤖 Generated with ..." lines, no `feat: phase 1`-style messages that mean nothing to anyone reading your history later.
 
-When an agent is about to commit on your behalf, this skill:
+It ships two ways from one set of rules: a native **Claude Code plugin**, and a plain **`AGENTS.md`** for every other agent (Codex, Cursor, Aider, Copilot Workspace, ...) that reads that convention.
 
-1. **Asks for exactly two things, once per repo**: your email address and your GitHub username. It verifies the username against the GitHub API and persists the identity to that repo's local git config — never global, so other repos are untouched.
-2. **Strips all AI attribution** — no `Co-Authored-By: Claude`, no session links, no "Generated with ..." lines, regardless of what the agent's default template wants to add.
-3. **Enforces Conventional Commits** on every message: `feat`, `fix`, `update`, `refactor`, `docs`, `style`, `test`, `perf`, `build`, `ci`, `chore` — imperative mood, specific, no filler.
-4. **Commits by logical change, not by plan milestone.** If you hand the agent a `plan.md` with numbered phases and it executes the whole thing, you get one commit per concern (a feature, a refactor, a fix), not one commit per phase — and never a message like `feat: phase 1`.
-5. **Pushes after every commit**, so nothing sits unpushed if the session gets interrupted.
+## The problem
 
-## Install
+Point an AI agent at a repo and let it commit, and you tend to get:
+
+- `Co-Authored-By: Claude <noreply@anthropic.com>` trailers baked into history you didn't ask for
+- Commit messages that describe the agent's plan ("phase 1", "phase 2") instead of the actual diff
+- Ten unrelated changes squashed into one commit, or one change split across ten
+- Work sitting uncommitted/unpushed for an entire session, gone if the session dies
+
+`clean-commits` is a small, boring set of rules that fixes all four.
+
+## What it enforces
+
+- **Solo human authorship.** Every commit is attributed to you — never the agent — and no AI/session attribution appears anywhere in the message or PR body.
+- **Conventional Commits.** `feat`, `fix`, `update`, `refactor`, `docs`, `style`, `test`, `perf`, `build`, `ci`, `chore` — chosen from the actual diff, not the task description.
+- **One commit per logical change.** A multi-step task produces one commit per concern, not one per plan milestone.
+- **Push after every commit.** Nothing valuable is left unpushed if a session is interrupted.
+
+## Installation
 
 ### Claude Code
 
-Add this repo as a plugin marketplace, then install the plugin:
-
-```bash
+```
 /plugin marketplace add Ebenezer-03/clean-commits
 /plugin install clean-commits
 ```
 
 ### Any other agent (Codex, Cursor, Aider, ...)
 
-Copy [`AGENTS.md`](./AGENTS.md) from this repo into the root of your own project (or merge its contents into an existing `AGENTS.md`). Any tool that reads `AGENTS.md` will pick up the same rules.
+Copy [`AGENTS.md`](./AGENTS.md) into the root of your project, or merge its contents into an existing `AGENTS.md`. Any tool that reads that file picks up the same rules — no install step required.
 
-## Why
+## How it works
 
-Commit history is a product surface — it's what shows up in `git blame`, PR reviews, and changelogs. Mixed authorship trailers and inconsistent messages make that history harder to trust and search. This skill keeps authorship honest and messages standardized, automatically, without you having to remember to ask for it every time.
+**First commit in a repo.** The agent checks `git config user.name` / `user.email`. If either is unset, it asks you for two things — your email and your GitHub username — verifies the username with `gh api users/<username>`, and writes both values to that repo's *local* git config (never `--global`, so it can't affect other projects on your machine). If `gh` isn't installed or the lookup fails, it warns and proceeds with what you typed rather than blocking you.
+
+**Every commit after that.** The agent reuses the stored identity, writes a Conventional Commits message describing the diff it just made, checks the message for any AI attribution before running `git commit`, then runs `git push`.
+
+Example of what you get, from a single "implement the plan" instruction spanning a login feature, a refactor, and its tests:
+
+```
+feat: add email/password login form
+refactor: extract validation into shared hook
+test: cover login form validation edge cases
+```
+
+Not:
+
+```
+feat: phase 1
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+## Cleaning up existing history
+
+If a repo already has AI-attributed commits:
+
+- **Unpushed, most recent commit** — `git commit --amend` with a corrected message.
+- **Older or already-pushed commits** — requires rewriting history (`git rebase -i`, or `git filter-repo` for bulk cleanup). This is destructive to shared history and needs a force-push; the agent will explain the tradeoff and ask for explicit confirmation before doing it.
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes scoped and, fittingly, follow the Conventional Commits format above when you submit one.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+[MIT](./LICENSE)
