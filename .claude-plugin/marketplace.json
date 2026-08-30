@@ -1,0 +1,15 @@
+{
+  "name": "clean-commits-marketplace",
+  "description": "Self-hosted marketplace for the clean-commits plugin.",
+  "owner": {
+    "name": "Ebenezer-03",
+    "url": "https://github.com/Ebenezer-03"
+  },
+  "plugins": [
+    {
+      "name": "clean-commits",
+      "source": "./",
+      "description": "Every commit authored solely by you, with production-grade Conventional Commits messages and no AI co-author trailers."
+    }
+  ]
+}

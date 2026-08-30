@@ -1,0 +1,11 @@
+{
+  "name": "clean-commits",
+  "description": "Every commit authored solely by you, with production-grade Conventional Commits messages and no AI co-author trailers.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Ebenezer-03"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Ebenezer-03/clean-commits",
+  "repository": "https://github.com/Ebenezer-03/clean-commits"
+}
