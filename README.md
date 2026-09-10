@@ -7,6 +7,25 @@ Stop AI coding agents from polluting your commit history. `clean-commits` keeps 
 
 It ships two ways from one set of rules: a native **Claude Code plugin**, and a plain **`AGENTS.md`** file for every other agent (Codex, Cursor, Aider, Copilot Workspace, etc.) that reads that convention.
 
+## Install for local agents
+
+To detect supported agents on your desktop and install the appropriate local instructions, run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Ebenezer-03/clean-commits/main/install.sh | bash
+```
+
+The installer supports Claude Code, Codex, Antigravity, Cursor, Aider, Cline, Windsurf, Roo Code, and GitHub Copilot. It only configures detected agents, creates a backup before replacing an existing target file, and leaves unrelated configuration untouched.
+
+Preview changes without writing files:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Ebenezer-03/clean-commits/main/install.sh -o install.sh
+bash install.sh --dry-run
+```
+
+Install for one agent explicitly with `bash install.sh --agent codex`, or remove files created by the installer with `bash install.sh --uninstall`.
+
 ## Quick demo
 
 What a single "implement the plan" instruction produces, when the plan spans a login feature, a refactor, and its tests:
